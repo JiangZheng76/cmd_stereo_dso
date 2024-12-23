@@ -198,6 +198,8 @@ void FullSystem::marginalizeFrame(FrameHessian* frame)
         for(IOWrap::Output3DWrapper* ow : outputWrapper)
             ow->publishKeyframes(v, true, &Hcalib);
     }
+	// CMD_MODE
+	comm->publishLoopframe(frame,&Hcalib);
 
 
 	frame->shell->marginalizedAt = frameHessians.back()->shell->id;

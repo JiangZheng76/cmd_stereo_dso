@@ -55,9 +55,12 @@
 #include "util/ImageAndExposure.h"
 
 #include <cmath>
-#include <cv.h>
+// #include <cv.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+
+// CMD_MODE
+#include "Comm/vo_comm.hpp"
 
 namespace dso
 {
@@ -176,6 +179,10 @@ FullSystem::FullSystem()
 	maxIdJetVisDebug = -1;
 	minIdJetVisTracker = -1;
 	maxIdJetVisTracker = -1;
+
+	// CMD_MODE
+  	comm.reset(new DSVComm("10.0.0.10","8888"));
+  	comm->action();
 }
 
 FullSystem::~FullSystem()
@@ -520,7 +527,7 @@ Vec4 FullSystem::trackNewCoarse(FrameHessian* fh, FrameHessian* fh_right)
 
 
     Eigen::Matrix<double,3,1> last_T = fh->shell->camToWorld.translation().transpose();
-    std::cout<<"x:"<<last_T(0,0)<<"y:"<<last_T(1,0)<<"z:"<<last_T(2,0)<<std::endl;
+    // std::cout<<"x:"<<last_T(0,0)<<"y:"<<last_T(1,0)<<"z:"<<last_T(2,0)<<std::endl;
 
 	if(coarseTracker->firstCoarseRMSE < 0)
 		coarseTracker->firstCoarseRMSE = achievedRes[0];
@@ -1155,7 +1162,7 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
                           setting_kfGlobalWeight*setting_maxShiftWeightR *  sqrtf((double)tres[2]) / (wG[0]+hG[0]) +
                           setting_kfGlobalWeight*setting_maxShiftWeightRT * sqrtf((double)tres[3]) / (wG[0]+hG[0]) +
                           setting_kfGlobalWeight*setting_maxAffineWeight * fabs(logf((float)refToFh[0]));
-            printf(" delta is %f \n", delta);
+            // printf(" delta is %f \n", delta);
             // BRIGHTNESS CHECK
 			needToMakeKF = allFrameHistory.size()== 1 || delta > 1 || 2*coarseTracker->firstCoarseRMSE < tres[0];
 
@@ -1371,7 +1378,7 @@ void FullSystem::makeKeyFrame( FrameHessian* fh, FrameHessian* fh_right)
 	fh->frameEnergyTH = frameHessians.back()->frameEnergyTH;
 	float rmse = optimize(setting_maxOptIterations);
     //printf("allKeyFramesHistory size is %d \n", (int)allKeyFramesHistory.size());
-    printf("rmse is %f \n", rmse);
+    // printf("rmse is %f \n", rmse);
 
 
 
@@ -1438,6 +1445,7 @@ void FullSystem::makeKeyFrame( FrameHessian* fh, FrameHessian* fh_right)
     {
         ow->publishGraph(ef->connectivityMap);
         ow->publishKeyframes(frameHessians, false, &Hcalib);
+
     }
 
 
@@ -1592,7 +1600,7 @@ void FullSystem::makeNewTraces(FrameHessian* newFrame, FrameHessian* newFrameRig
 		else newFrame->immaturePoints.push_back(impt);
 
 	}
-	printf("MADE %d IMMATURE POINTS!\n", (int)newFrame->immaturePoints.size());
+	// printf("MADE %d IMMATURE POINTS!\n", (int)newFrame->immaturePoints.size());
 
 }
 

@@ -51,8 +51,8 @@
 #include "IOWrapper/Pangolin/PangolinDSOViewer.h"
 #include "IOWrapper/OutputWrapper/SampleOutputWrapper.h"
 
-#include <opencv/cv.hpp>
-#include <opencv/highgui.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui.hpp>
 
 
 std::string vignette = "";
@@ -373,7 +373,7 @@ int main( int argc, char** argv )
 	
 	int lstart=start;
 	int lend = end;
-	
+
 	// build system
 	FullSystem* fullSystem = new FullSystem();
 	fullSystem->setGammaFunction(reader->getPhotometricGamma());

@@ -1,0 +1,11 @@
+<launch>
+  <arg name="path" default="/media/sysu/200GB_Other/Dataset/Slam/KITTI/sequences/00"/>
+
+  <node name="stereo_dso" pkg="stereo_dso" type="dso_dataset" output="screen" required="true">
+    <param name="files" value="$(arg path)/" />
+    <param name="calib" value="$(arg path)/calib.txt" />
+    <param name="preset" value="0" />
+    <param name="mode" value="1" />
+  </node>
+
+  </launch>

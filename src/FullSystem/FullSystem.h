@@ -41,6 +41,10 @@
 
 #include <math.h>
 
+
+// CMD_MODE
+#include "Comm/vo_comm.hpp"
+
 namespace dso
 {
 namespace IOWrap
@@ -319,6 +323,9 @@ private:
 	bool needToKetchupMapping;
 
 	int lastRefStopID;
+
+	// CMD_MODE
+  	std::shared_ptr<DSVComm> comm;
 };
 }
 
