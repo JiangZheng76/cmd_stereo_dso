@@ -1,11 +1,13 @@
 <launch>
-  <arg name="path" default="/media/sysu/200GB_Other/Dataset/Slam/KITTI/sequences/00"/>
-
-  <node name="stereo_dso" pkg="stereo_dso" type="dso_dataset" output="screen" required="true">
-    <param name="files" value="$(arg path)/" />
-    <param name="calib" value="$(arg path)/calib.txt" />
+  <node name="stereo_dso" pkg="stereo_dso" type="dso_dataset_ros" output="screen" required="true">
+    <param name="files" value="/media/sysu/200GB_Other/Dataset/Slam/KITTI/sequences/00" />
+    <param name="bag" value="/media/sysu/200GB_Other/Dataset/Slam/KITTI/sequences/00/kitti00.bag"/>
+    <param name="calib" value="/home/sysu/cmd_ws/src/cmd-slam/vo/stereo-dso/cams/kitti/0_2/camera.txt" />
+    <param name="topic0" value="camera/left/image_raw" />
+    <param name="topic1" value="camera/right/image_raw" />
     <param name="preset" value="0" />
     <param name="mode" value="1" />
+    <param name="quiet" value="1" />
+    <param name="nomt" value="1" />
   </node>
-
-  </launch>
+</launch>

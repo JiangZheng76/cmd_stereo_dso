@@ -1,0 +1,13 @@
+<launch>
+  <node name="stereo_dso" pkg="stereo_dso" type="dso_dataset_ros" output="screen" required="true">
+    <param name="files" value="/media/sysu/200GB_Other/Dataset/Slam/campus" />
+    <param name="bag" value="/media/sysu/200GB_Other/Dataset/Slam/campus/A.bag"/>
+    <param name="calib" value="/home/sysu/cmd_ws/src/cmd-slam/vo/stereo-dso/cams/campus/camera0.txt" />
+    <param name="topic0" value="/camera/infra1/image_rect_raw/compressed" />
+    <param name="topic1" value="/camera/infra2/image_rect_raw/compressed" />
+    <param name="preset" value="0" />
+    <param name="mode" value="1" />
+    <param name="quiet" value="1" />
+    <param name="nomt" value="1" />
+  </node>
+</launch>

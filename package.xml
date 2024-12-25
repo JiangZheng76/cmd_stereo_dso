@@ -15,5 +15,12 @@
     <depend>cmd_comm</depend>
     <depend>cmd_frontend</depend>
     <depend>yaml-cpp</depend>
+    <depend>geometry_msgs</depend>
+    <depend>rosbag</depend>
+    <depend>sensor_msgs</depend>
+    <depend>cv_bridge</depend>
+    <!-- <depend>eigen_catkin</depend> -->
+    <depend>image_transport</depend>
+    <depend>message_filters</depend>
     <export></export>
 </package>
