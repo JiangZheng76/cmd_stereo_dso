@@ -1,6 +1,6 @@
 <launch>
-  <arg name="files_path" default="/home/sysu/Desktop/JZ/dataset/KITTI/sequences/00/multi-robot" />
-  <arg name="bag_path" default="/home/sysu/Desktop/JZ/dataset/KITTI/sequences/00/multi-robot/" />
+  <arg name="files_path" default="/media/sysu/200GB_Other/Dataset/Slam/KITTI/sequences/00/multi-robot/" />
+  <arg name="bag_path" default="/media/sysu/200GB_Other/Dataset/Slam/KITTI/sequences/00/multi-robot/" />
   <arg name="calib_path"
     default="/home/sysu/cmd_ws/src/cmd-slam/vo/stereo-dso/cams/kitti/0_2/camera.txt" />
 

@@ -92,10 +92,8 @@ using namespace dso;
 
 void my_exit_handler(int s) {
   printf("Caught signal %d\n", s);
-
   exit(1);
 }
-
 void exitThread() {
   struct sigaction sigIntHandler;
   sigIntHandler.sa_handler = my_exit_handler;
@@ -107,52 +105,36 @@ void exitThread() {
   while (true) pause();
 }
 
-void settingsDefault(int preset) {
+void settingsDefault(int preset, int mode) {
   printf("\n=============== PRESET Settings: ===============\n");
-  if (preset == 0 || preset == 1) {
+  if (preset == 1 || preset == 3) {
+    printf("preset=%d is not supported", preset);
+    exit(1);
+  }
+  if (preset == 0) {
     printf(
         "DEFAULT settings:\n"
-        "- %s real-time enforcing\n"
         "- 2000 active points\n"
         "- 5-7 active frames\n"
         "- 1-6 LM iteration each KF\n"
-        "- original image resolution\n",
-        preset == 0 ? "no " : "1x");
+        "- original image resolution\n");
 
-    playbackSpeed = (preset == 0 ? 0 : 1);
-    preload = preset == 1;
     setting_desiredImmatureDensity = 1500;
     setting_desiredPointDensity = 2000;
     setting_minFrames = 5;
     setting_maxFrames = 7;
     setting_maxOptIterations = 6;
     setting_minOptIterations = 1;
-
-    setting_logStuff = false;
-    setting_kfGlobalWeight =
-        1.0;  // original is 1.0. 0.3 is a balance between speed and accuracy.
-              // if tracking lost, set this para higher
-    setting_maxShiftWeightT =
-        0.04f * (640 + 480);  // original is 0.04f * (640+480); this para is
-                              // depend on the crop size.
-    setting_maxShiftWeightR =
-        0.0f * (640 + 480);  // original is 0.0f * (640+480);
-    setting_maxShiftWeightRT =
-        0.02f * (640 + 480);  // original is 0.02f * (640+480);
   }
 
-  if (preset == 2 || preset == 3) {
+  if (preset == 2) {
     printf(
         "FAST settings:\n"
-        "- %s real-time enforcing\n"
         "- 800 active points\n"
         "- 4-6 active frames\n"
         "- 1-4 LM iteration each KF\n"
-        "- 424 x 320 image resolution\n",
-        preset == 0 ? "no " : "5x");
+        "- 424 x 320 image resolution\n");
 
-    playbackSpeed = (preset == 2 ? 0 : 5);
-    preload = preset == 3;
     setting_desiredImmatureDensity = 600;
     setting_desiredPointDensity = 800;
     setting_minFrames = 4;
@@ -162,194 +144,28 @@ void settingsDefault(int preset) {
 
     benchmarkSetting_width = 424;
     benchmarkSetting_height = 320;
+  }
 
-    setting_logStuff = false;
+  if (mode == 0) {
+    printf("PHOTOMETRIC MODE WITH CALIBRATION!\n");
+  }
+  if (mode == 1) {
+    printf("PHOTOMETRIC MODE WITHOUT CALIBRATION!\n");
+    setting_photometricCalibration = 0;
+    setting_affineOptModeA = 0;  //-1: fix. >=0: optimize (with prior, if > 0).
+    setting_affineOptModeB = 0;  //-1: fix. >=0: optimize (with prior, if > 0).
+  }
+  if (mode == 2) {
+    printf("PHOTOMETRIC MODE WITH PERFECT IMAGES!\n");
+    setting_photometricCalibration = 0;
+    setting_affineOptModeA = -1;  //-1: fix. >=0: optimize (with prior, if > 0).
+    setting_affineOptModeB = -1;  //-1: fix. >=0: optimize (with prior, if > 0).
+    setting_minGradHistAdd = 3;
   }
 
   printf("==============================================\n");
 }
 
-void parseArgument(char *arg) {
-  int option;
-  float foption;
-  char buf[1000];
-
-  if (1 == sscanf(arg, "sampleoutput=%d", &option)) {
-    if (option == 1) {
-      useSampleOutput = true;
-      printf("USING SAMPLE OUTPUT WRAPPER!\n");
-    }
-    return;
-  }
-
-  if (1 == sscanf(arg, "quiet=%d", &option)) {
-    if (option == 1) {
-      setting_debugout_runquiet = true;
-      printf("QUIET MODE, I'll shut up!\n");
-    }
-    return;
-  }
-
-  if (1 == sscanf(arg, "preset=%d", &option)) {
-    settingsDefault(option);
-    return;
-  }
-
-  if (1 == sscanf(arg, "rec=%d", &option)) {
-    if (option == 0) {
-      disableReconfigure = true;
-      printf("DISABLE RECONFIGURE!\n");
-    }
-    return;
-  }
-
-  if (1 == sscanf(arg, "noros=%d", &option)) {
-    if (option == 1) {
-      disableROS = true;
-      disableReconfigure = true;
-      printf("DISABLE ROS (AND RECONFIGURE)!\n");
-    }
-    return;
-  }
-
-  if (1 == sscanf(arg, "nolog=%d", &option)) {
-    if (option == 1) {
-      setting_logStuff = false;
-      printf("DISABLE LOGGING!\n");
-    }
-    return;
-  }
-  if (1 == sscanf(arg, "reverse=%d", &option)) {
-    if (option == 1) {
-      reverse = true;
-      printf("REVERSE!\n");
-    }
-    return;
-  }
-  if (1 == sscanf(arg, "nogui=%d", &option)) {
-    if (option == 1) {
-      disableAllDisplay = true;
-      printf("NO GUI!\n");
-    }
-    return;
-  }
-  if (1 == sscanf(arg, "nomt=%d", &option)) {
-    if (option == 1) {
-      multiThreading = false;
-      printf("NO MultiThreading!\n");
-    }
-    return;
-  }
-  if (1 == sscanf(arg, "prefetch=%d", &option)) {
-    if (option == 1) {
-      prefetch = true;
-      printf("PREFETCH!\n");
-    }
-    return;
-  }
-  if (1 == sscanf(arg, "start=%d", &option)) {
-    start = option;
-    printf("START AT %d!\n", start);
-    return;
-  }
-  if (1 == sscanf(arg, "end=%d", &option)) {
-    end = option;
-    printf("END AT %d!\n", start);
-    return;
-  }
-
-  if (1 == sscanf(arg, "files=%s", buf)) {
-    source = buf;
-    printf("loading data from %s!\n", source.c_str());
-    return;
-  }
-  if (1 == sscanf(arg, "groundtruth=%s", buf)) {
-    gt_path = buf;
-    printf("loading groundtruth from %s!\n", gt_path.c_str());
-    return;
-  }
-
-  if (1 == sscanf(arg, "calib=%s", buf)) {
-    calib = buf;
-    printf("loading calibration from %s!\n", calib.c_str());
-    return;
-  }
-
-  if (1 == sscanf(arg, "vignette=%s", buf)) {
-    vignette = buf;
-    printf("loading vignette from %s!\n", vignette.c_str());
-    return;
-  }
-
-  if (1 == sscanf(arg, "gamma=%s", buf)) {
-    gammaCalib = buf;
-    printf("loading gammaCalib from %s!\n", gammaCalib.c_str());
-    return;
-  }
-
-  if (1 == sscanf(arg, "rescale=%f", &foption)) {
-    rescale = foption;
-    printf("RESCALE %f!\n", rescale);
-    return;
-  }
-
-  if (1 == sscanf(arg, "speed=%f", &foption)) {
-    playbackSpeed = foption;
-    printf("PLAYBACK SPEED %f!\n", playbackSpeed);
-    return;
-  }
-
-  if (1 == sscanf(arg, "save=%d", &option)) {
-    if (option == 1) {
-      debugSaveImages = true;
-      if (42 == system("rm -rf images_out"))
-        printf(
-            "system call returned 42 - what are the odds?. This is only here "
-            "to shut up the compiler.\n");
-      if (42 == system("mkdir images_out"))
-        printf(
-            "system call returned 42 - what are the odds?. This is only here "
-            "to shut up the compiler.\n");
-      if (42 == system("rm -rf images_out"))
-        printf(
-            "system call returned 42 - what are the odds?. This is only here "
-            "to shut up the compiler.\n");
-      if (42 == system("mkdir images_out"))
-        printf(
-            "system call returned 42 - what are the odds?. This is only here "
-            "to shut up the compiler.\n");
-      printf("SAVE IMAGES!\n");
-    }
-    return;
-  }
-
-  if (1 == sscanf(arg, "mode=%d", &option)) {
-    mode = option;
-    if (option == 0) {
-      printf("PHOTOMETRIC MODE WITH CALIBRATION!\n");
-    }
-    if (option == 1) {
-      printf("PHOTOMETRIC MODE WITHOUT CALIBRATION!\n");
-      setting_photometricCalibration = 0;
-      setting_affineOptModeA =
-          0;  //-1: fix. >=0: optimize (with prior, if > 0).
-      setting_affineOptModeB =
-          0;  //-1: fix. >=0: optimize (with prior, if > 0).
-    }
-    if (option == 2) {
-      printf("PHOTOMETRIC MODE WITH PERFECT IMAGES!\n");
-      setting_photometricCalibration = 0;
-      setting_affineOptModeA =
-          -1;  //-1: fix. >=0: optimize (with prior, if > 0).
-      setting_affineOptModeB =
-          -1;  //-1: fix. >=0: optimize (with prior, if > 0).
-      setting_minGradHistAdd = 3;
-    }
-    return;
-  }
-
-  printf("could not parse argument \"%s\"!!!!\n", arg);
-}
 void convertCompressImageToImage(sensor_msgs::CompressedImagePtr &compress_img,
                                  sensor_msgs::ImagePtr &img) {
   try {
@@ -364,26 +180,6 @@ void convertCompressImageToImage(sensor_msgs::CompressedImagePtr &compress_img,
   }
 }
 
-void getGroundtruth() {
-  std::ifstream inf;
-  inf.open(gt_path);
-  std::string sline;
-  std::getline(inf, sline);
-  while (std::getline(inf, sline)) {
-    std::istringstream ss(sline);
-    Mat33 R;
-    Vec3 t;
-    for (int i = 0; i < 3; ++i) {
-      for (int j = 0; j < 3; ++j) {
-        ss >> R(i, j);
-      }
-      ss >> t(i);
-    }
-    SE3 temp(R, t);
-    gt_pose.push_back(temp);
-  }
-  inf.close();
-}
 void imageMessageCallback(const sensor_msgs::ImageConstPtr &msg0,
                           const sensor_msgs::ImageConstPtr &msg1) {
   cv::Mat img0, img1;
@@ -446,7 +242,6 @@ void imageMessageCallback(const sensor_msgs::ImageConstPtr &msg0,
   delete undistImg0;
   delete undistImg1;
 }
-
 int main(int argc, char **argv) {
   ros::init(argc, argv, "stereo_dso");
   ros::NodeHandle nhPriv("~");
@@ -466,36 +261,15 @@ int main(int argc, char **argv) {
     std::cout << "nomt : " << nomt << std::endl;
     std::cout << "topic0 : " << topic0 << std::endl;
     std::cout << "topic1 : " << topic1 << std::endl;
-    return -1;
+    exit(0);
   } else {
-    settingsDefault(preset);
+    settingsDefault(preset, mode);
     if (quiet == 1) {
       setting_debugout_runquiet = true;
     }
     if (nomt == 1) {
       multiThreading = false;
       printf("NO MultiThreading!\n");
-    }
-    // update mode
-    if (mode == 0) {
-      printf("PHOTOMETRIC MODE WITH CALIBRATION!\n");
-    }
-    if (mode == 1) {
-      printf("PHOTOMETRIC MODE WITHOUT CALIBRATION!\n");
-      setting_photometricCalibration = 0;
-      setting_affineOptModeA =
-          0;  //-1: fix. >=0: optimize (with prior, if > 0).
-      setting_affineOptModeB =
-          0;  //-1: fix. >=0: optimize (with prior, if > 0).
-    }
-    if (mode == 2) {
-      printf("PHOTOMETRIC MODE WITH PERFECT IMAGES!\n");
-      setting_photometricCalibration = 0;
-      setting_affineOptModeA =
-          -1;  //-1: fix. >=0: optimize (with prior, if > 0).
-      setting_affineOptModeB =
-          -1;  //-1: fix. >=0: optimize (with prior, if > 0).
-      setting_minGradHistAdd = 3;
     }
     nhPriv.param<double>("lidar_range", lidar_range, 40.0);
     std::cout << "lidar_range : " << lidar_range << "\n";
@@ -515,8 +289,6 @@ int main(int argc, char **argv) {
 
   nhPriv.param<std::string>("groundtruth", groundtruth);
   std::cout << "groundtruth : " << groundtruth << std::endl;
-
-  // if(gt_path.size()>0)getGroundtruth();
   // hook crtl+C.
   boost::thread exThread = boost::thread(exitThread);
 
@@ -538,10 +310,7 @@ int main(int argc, char **argv) {
 
   // read from a bag file
   std::string bag_path;
-  bool is_cfe = true;
   nhPriv.param<std::string>("bag", bag_path, "");
-  // nhPriv.param<bool>("is_cfe", is_cfe, true);
-  // std::cout << "is_cfe: " << is_cfe << std::endl;
   /* ******************************************************************** */
   // 配置参数
   fullSystem = new FullSystem();
@@ -553,8 +322,6 @@ int main(int argc, char **argv) {
     viewer = new IOWrap::PangolinDSOViewer(wG[0], hG[0], true);
     fullSystem->outputWrapper.push_back(viewer);
   }
-  // if(viewer != 0)
-  //     viewer->run();
 
   // 利用这个播放topic
   if (!bag_path.empty()) {
@@ -568,24 +335,20 @@ int main(int argc, char **argv) {
     BOOST_FOREACH (rosbag::MessageInstance const m, view) {
       if (m.getTopic() == topic0) {
         img0 = m.instantiate<sensor_msgs::Image>();
-#ifdef CODSV_MOD
         if (!img0) {
           sensor_msgs::CompressedImagePtr compress_img =
               m.instantiate<sensor_msgs::CompressedImage>();
           convertCompressImageToImage(compress_img, img0);
         }
-#endif
         img0_updated = true;
       }
       if (m.getTopic() == topic1) {
         img1 = m.instantiate<sensor_msgs::Image>();
-#ifdef CODSV_MOD
         if (!img1) {
           sensor_msgs::CompressedImagePtr compress_img =
               m.instantiate<sensor_msgs::CompressedImage>();
           convertCompressImageToImage(compress_img, img1);
         }
-#endif
         img1_updated = true;
       }
       if (img0_updated && img1_updated) {
@@ -598,7 +361,6 @@ int main(int argc, char **argv) {
     }
     bag.close();
   } else {
-    // 如果没有填bag的路径则是选择播放bag来实现
     // ROS subscribe to stereo images
     ros::NodeHandle nh;
     auto *cam0_sub =
@@ -618,8 +380,6 @@ int main(int argc, char **argv) {
   clock_t ended = clock();
   struct timeval tv_end;
   gettimeofday(&tv_end, NULL);
-
-  // runthread.join();
   exit(0);
 
   for (IOWrap::Output3DWrapper *ow : fullSystem->outputWrapper) {
@@ -636,7 +396,5 @@ int main(int argc, char **argv) {
   delete undistorter0_;
   delete undistorter1_;
   printf("EXIT NOW!\n");
-  return 0;
-
   return 0;
 }
