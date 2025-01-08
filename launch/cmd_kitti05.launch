@@ -1,0 +1,43 @@
+<launch>
+  <arg name="files_path" default="/media/sysu/200GB_Other/Dataset/Slam/KITTI/sequences/05/multi-robot/" />
+  <arg name="bag_path" default="/media/sysu/200GB_Other/Dataset/Slam/KITTI/sequences/05/multi-robot/" />
+  <arg name="calib_path"
+    default="/home/sysu/cmd_ws/src/cmd-slam/vo/stereo-dso/cams/kitti/4_12/camera.txt" />
+
+  <node name="stereo_dso1" pkg="stereo_dso" type="dso_dataset_ros" output="screen" required="true">
+    <param name="files" value="$(arg files_path)" />
+    <param name="bag" value="$(arg bag_path)/1.bag" />
+    <param name="calib" value="$(arg calib_path)" />
+    <param name="topic0" value="camera/left/image_raw" />
+    <param name="topic1" value="camera/right/image_raw" />
+    <param name="preset" value="0" />
+    <param name="mode" value="1" />
+    <param name="quiet" value="1" />
+    <param name="nomt" value="1" />
+  </node>
+
+  <node name="stereo_dso2" pkg="stereo_dso" type="dso_dataset_ros" output="screen" required="true">
+    <param name="files" value="$(arg files_path)" />
+    <param name="bag" value="$(arg bag_path)/2.bag" />
+    <param name="calib" value="$(arg calib_path)" />
+    <param name="topic0" value="camera/left/image_raw" />
+    <param name="topic1" value="camera/right/image_raw" />
+    <param name="preset" value="0" />
+    <param name="mode" value="1" />
+    <param name="quiet" value="1" />
+    <param name="nomt" value="1" />
+  </node>
+
+  <node name="stereo_dso3" pkg="stereo_dso" type="dso_dataset_ros" output="screen" required="true">
+    <param name="files" value="$(arg files_path)" />
+    <param name="bag" value="$(arg bag_path)/3.bag" />
+    <param name="calib" value="$(arg calib_path)" />
+    <param name="topic0" value="camera/left/image_raw" />
+    <param name="topic1" value="camera/right/image_raw" />
+    <param name="preset" value="0" />
+    <param name="mode" value="1" />
+    <param name="quiet" value="1" />
+    <param name="nomt" value="1" />
+  </node>
+</launch>
+  

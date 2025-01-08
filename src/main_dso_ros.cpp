@@ -166,18 +166,21 @@ void settingsDefault(int preset, int mode) {
   printf("==============================================\n");
 }
 
-void convertCompressImageToImage(sensor_msgs::CompressedImagePtr &compress_img,
-                                 sensor_msgs::ImagePtr &img) {
+sensor_msgs::ImagePtr convertCompressImageToImage(
+    sensor_msgs::CompressedImagePtr &compress_img) {
   try {
     // 将压缩的图像消息转换为OpenCV格式
     cv::Mat image = cv::imdecode(cv::Mat(compress_img->data), 1);
 
     // 将OpenCV图像格式转换为图像消息
-    img = cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
+    sensor_msgs::ImagePtr img =
+        cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
     img->header.stamp = compress_img->header.stamp;
+    return img;
   } catch (cv_bridge::Exception &e) {
     ROS_ERROR("cv_bridge exception: %s", e.what());
   }
+  return nullptr;
 }
 
 void imageMessageCallback(const sensor_msgs::ImageConstPtr &msg0,
@@ -197,16 +200,19 @@ void imageMessageCallback(const sensor_msgs::ImageConstPtr &msg0,
   }
   currentTimeStamp = msg0->header.stamp.toSec();
 
+  // 去畸变
   MinimalImageB minImg0((int)img0.cols, (int)img0.rows,
                         (unsigned char *)img0.data);
-  // 去畸变
   ImageAndExposure *undistImg0 =
       undistorter0_->undistort<unsigned char>(&minImg0, 1, 0, 1.0f);
   undistImg0->timestamp = msg0->header.stamp.toSec();
+
   MinimalImageB minImg1((int)img1.cols, (int)img1.rows,
                         (unsigned char *)img1.data);
   ImageAndExposure *undistImg1 =
       undistorter1_->undistort<unsigned char>(&minImg1, 1, 0, 1.0f);
+  undistImg1->timestamp = msg1->header.stamp.toSec();
+
   auto t0 = std::chrono::steady_clock::now();
   static int incomingId = 0;
   fullSystem->addActiveFrame(undistImg0, undistImg1, incomingId++);
@@ -231,7 +237,6 @@ void imageMessageCallback(const sensor_msgs::ImageConstPtr &msg0,
     fullSystem->outputWrapper = wraps;
 
     setting_fullResetRequested = false;
-    // setting_fullResetRequested=false;
   }
   if (fullSystem->isLost) {
     printf("LOST!!\n");
@@ -338,7 +343,7 @@ int main(int argc, char **argv) {
         if (!img0) {
           sensor_msgs::CompressedImagePtr compress_img =
               m.instantiate<sensor_msgs::CompressedImage>();
-          convertCompressImageToImage(compress_img, img0);
+          img0 = convertCompressImageToImage(compress_img);
         }
         img0_updated = true;
       }
@@ -347,7 +352,7 @@ int main(int argc, char **argv) {
         if (!img1) {
           sensor_msgs::CompressedImagePtr compress_img =
               m.instantiate<sensor_msgs::CompressedImage>();
-          convertCompressImageToImage(compress_img, img1);
+          img1 = convertCompressImageToImage(compress_img);
         }
         img1_updated = true;
       }
@@ -360,26 +365,12 @@ int main(int argc, char **argv) {
       }
     }
     bag.close();
-  } else {
-    // ROS subscribe to stereo images
-    ros::NodeHandle nh;
-    auto *cam0_sub =
-        new message_filters::Subscriber<sensor_msgs::Image>(nh, topic0, 10000);
-    auto *cam1_sub =
-        new message_filters::Subscriber<sensor_msgs::Image>(nh, topic1, 10000);
-    auto *sync = new message_filters::Synchronizer<
-        message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
-                                                        sensor_msgs::Image>>(
-        message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
-                                                        sensor_msgs::Image>(10),
-        *cam0_sub, *cam1_sub);
-    sync->registerCallback(boost::bind(&imageMessageCallback, _1, _2));
-    ros::spin();
   }
   fullSystem->blockUntilMappingIsFinished();
   clock_t ended = clock();
   struct timeval tv_end;
   gettimeofday(&tv_end, NULL);
+  fullSystem->printResult("/tmp/stereo_dso/result.txt");
   exit(0);
 
   for (IOWrap::Output3DWrapper *ow : fullSystem->outputWrapper) {
