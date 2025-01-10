@@ -181,7 +181,7 @@ FullSystem::FullSystem()
 	maxIdJetVisTracker = -1;
 
 	// CMD_MODE
-  	comm.reset(new DSVComm("10.0.0.10","8888"));
+  	comm = std::make_shared<DSVComm>("10.0.0.10","8888");
   	comm->action();
 }
 
